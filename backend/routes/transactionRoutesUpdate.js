@@ -9,9 +9,20 @@ dotenv.config();
 const router = express.Router();
 
 // Update
-router.put("/updateTransaction/:id", async (req, res) => {
+// Update (local Mongo only, restricted by publicKey)
+router.put("/updateTransaction/:id", authenticate, async (req, res) => {
   try {
-    const { id } = req.params;
+    const publicKey = req.user?.publicKey;
+    if (!publicKey) {
+      return res.status(401).json({ success: false, message: "Unauthorized: missing publicKey in token." });
+    }
+
+    const { id } = req.params; // 这里的 id = transactionID（自定义 UUID），不是 Mongo _id
+    if (!id) {
+      return res.status(400).json({ success: false, message: "Transaction ID is required." });
+    }
+
+    // 仅允许这些字段被更新（白名单）
     const {
       amount,
       category,
@@ -21,129 +32,53 @@ router.put("/updateTransaction/:id", async (req, res) => {
       merchant,
       paymentMethod,
       timestamp,
-      _id // ID of the transaction in the MongoDB collection
     } = req.body;
 
-    // Verifies if the ID is provided
-    if (!id) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Transaction ID is required" 
-      });
+    // 基本校验
+    const update = {};
+    if (amount !== undefined) {
+      const amountNum = Number(amount);
+      if (isNaN(amountNum) || amountNum < 0) {
+        return res.status(400).json({ success: false, message: "Invalid amount provided." });
+      }
+      update.amount = amountNum;
     }
+    if (category !== undefined) update.category = category;
+    if (currency !== undefined) update.currency = currency;
+    if (transactionType !== undefined) update.transactionType = transactionType;
+    if (notes !== undefined) update.notes = notes;
+    if (merchant !== undefined) update.merchant = merchant;
+    if (paymentMethod !== undefined) update.paymentMethod = paymentMethod;
+    if (timestamp !== undefined) update.timestamp = timestamp ? new Date(timestamp) : null;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid transaction ID format" 
-      });
-    }
-
-    const existingTransaction = await Transaction.findById(id);
-    if (!existingTransaction) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Transaction not found." 
-      });
-    }
-
-    // Transaction ID from the request body should match the ID in the URL
-    const amount_num = Number(amount);
-    if (isNaN(amount_num) || amount_num < 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid amount provided." 
-      });
-    }
-
-    const updateData = {
-      amount: amount_num,
-      category,
-      currency,
-      transactionType,
-      notes,
-      merchant,
-      paymentMethod,
-      timestamp: timestamp ? new Date(timestamp) : undefined
-    };
-
-    const updatedTransaction = await Transaction.findByIdAndUpdate(
-      id, 
-      updateData, 
+    // 按 transactionID + publicKey + 未软删 定位并更新
+    const updatedTransaction = await Transaction.findOneAndUpdate(
+      { transactionID: id, publicKey, isDeleted: { $ne: true } },
+      { $set: update },
       { new: true }
     );
 
     if (!updatedTransaction) {
       return res.status(404).json({
         success: false,
-        message: "Transaction not found after update",
+        message: "Transaction not found or not owned by this user.",
       });
     }
 
-    // GraphQL mutation to update transaction in ResilientDB
-    const graphQLEndpoint = 'http://76.158.247.201:8070/graphql'; 
-
-    const mutation = `
-      mutation UpdateTransaction($id: ID!, $input: TransactionInput!) {
-        updateTransaction(id: $id, input: $input) {
-          id
-          amount
-          transactionType
-          category
-          currency
-          notes
-          merchant
-          paymentMethod
-          timestamp
-        }
-      }
-    `;
-
-    const variables = {
-      id: id,
-      input: {
-        amount: amount,
-        transactionType: transactionType,
-        category: category,
-        currency: currency,
-        notes: notes,
-        merchant: merchant,
-        paymentMethod: paymentMethod,
-        timestamp: timestamp ? new Date(timestamp) : null,
-      },
-    };
-
-    // Execute the GraphQL mutation
-    const graphqlResponse = await fetch(graphQLEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: mutation,
-        variables: variables,
-      }),
-    });
-
-    const graphqlResult = await graphqlResponse.json();
-
-    if (graphqlResult.errors) {
-      console.error("Error updating transaction in ResilientDB:", graphqlResult.errors);
-      // Optionally handle the error or return a response
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Transaction updated successfully",
-      updatedTransaction
+      message: "Transaction updated successfully.",
+      updatedTransaction,
     });
-
   } catch (error) {
     console.error("Error updating transaction:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || "Internal server error" 
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
     });
   }
 });
+
 
 // export the router
 export default router;

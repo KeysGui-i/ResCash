@@ -33,71 +33,34 @@ const authenticate = (req, res, next) => {
 };
 
 
-// Route to fetch user-specific transactions
+// Route to fetch user-specific transactions (local Mongo only)
 router.get("/userTransactions", authenticate, async (req, res) => {
-  const publicKey = req.publicKey; // Extract from authenticated JWT
+  // Prefer req.user.publicKey from JWT; fall back to req.publicKey if your middleware set that
+  const publicKey = req.user?.publicKey || req.publicKey;
+  if (!publicKey) {
+    return res.status(401).json({ message: "Unauthorized: missing publicKey in token." });
+  }
 
   try {
-    console.log(`Fetching data for publicKey: ${publicKey}`);
+    console.log(`Fetching local transactions for publicKey: ${publicKey}`);
 
     const db = req.app.locals.db;
-    const collection = db.collection("res_cache");
+    const collection = db.collection("transactions");
 
-    const pipeline = [
-      // Unwind the transactions array
-      { $unwind: "$transactions" },
-    
-      // Match transactions involving the user's publicKey
-      {
-        $match: {
-          $and: [
-            {
-              $or: [
-                { "transactions.value.inputs.owners_before": publicKey },
-                { "transactions.value.outputs.public_keys": publicKey },
-              ],
-            },
-            
-            {
-              "transactions.value.asset.data.login_transaction_id": { $exists: false },// Exclude login transactions (those with login_transaction_id in asset.data)
-              "transactions.value.asset.data.is_deleted": "false" , // Include only non-deleted transactions
-            },
-          ],
-        },
-      },
-    
-      // Sort by timestamp in descending order
-      {
-        $sort: {
-          "transactions.value.asset.data.timestamp": -1,
-        },
-      },
-    
-      // Project only the necessary fields
-      {
-        $project: {
-          _id: 0,
-          transactionID: "$transactions.key",
-        },
-      },
-    ];
-    
-    const transactions = await collection.aggregate(pipeline).toArray();
-    const ids = transactions.map((item) => item.transactionID); // Extract the array of IDs
+    // Only this user's non-deleted transactions, newest first
+    const mongoTransactions = await collection
+      .find({
+        publicKey,
+        $or: [{ isDeleted: { $exists: false } }, { isDeleted: { $ne: true } }],
+      })
+      .sort({ timestamp: -1 })
+      .toArray();
 
-    if (!ids.length) {
-      return res.status(200).json([]);
-    }
-
-    // Step 2: Fetch full transaction details from the transactions collection
-    const mongoTransactions = await db.collection("transactions").find({
-      transactionID: { $in: ids },
-    }).toArray();
-
-    res.status(200).json(mongoTransactions);
+    return res.status(200).json(mongoTransactions);
   } catch (error) {
     console.error("Error fetching user-specific transactions:", error);
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
+
 export default router;

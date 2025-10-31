@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import ResVaultSDK from "resvault-sdk";
+
 import "../App.css";
 import NotificationModal from "./NotificationModal";
 
@@ -87,12 +87,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     setCategory(selectedCategory);
     onFormChange && onFormChange({ category: selectedCategory });
   };
-
-  const sdkRef = useRef<ResVaultSDK | null>(null);
-
-  if (!sdkRef.current) {
-    sdkRef.current = new ResVaultSDK();
-  }
 
   useEffect(() => {
     if (onFormChange) {
@@ -237,39 +231,46 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     return () => window.removeEventListener("message", messageHandler);
   }, [onSdkOpen, onSdkComplete]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const currentTimestamp = new Date().toISOString();
+  setTimestamp(currentTimestamp);
 
-    const currentTimestamp = new Date().toISOString();
-    setTimestamp(currentTimestamp);
-
-    const transactionData = {
-      is_deleted: "false",
-      timestamp: currentTimestamp,
-    };
-
-    if (sdkRef.current) {
-      console.log("Sending transaction data:", {
-        type: "commit",
-        direction: "commit",
-        amount: amount,
-        data: transactionData,
-        recipient: recipientAddress,
-      });
-
-      sdkRef.current.sendMessage({
-        type: "commit",
-        direction: "commit",
-        amount: amount,
-        data: transactionData,
-        recipient: recipientAddress,
-      });
-    } else {
-      setModalTitle("Error");
-      setModalMessage("SDK is not initialized.");
-      setShowModal(true);
-    }
+  const requestBody = {
+    amount,
+    category,
+    transactionType,
+    notes,
+    merchant,
+    paymentMethod,
+    timestamp: currentTimestamp,
   };
+
+  try {
+    const resp = await fetch("http://localhost:8099/api/transactions/saveTransaction", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`, // 用 JWT 验证
+      },
+      body: JSON.stringify(requestBody),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      setModalTitle("Success");
+      setModalMessage("Transaction saved successfully!");
+    } else {
+      setModalTitle("Failed");
+      setModalMessage(data.message || "Unknown error.");
+    }
+  } catch (err: any) {
+    setModalTitle("Error");
+    setModalMessage(err.message || "Network error");
+  } finally {
+    setShowModal(true);
+  }
+};
+
 
   const handleLogout = () => {
     onLogout();

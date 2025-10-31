@@ -9,7 +9,7 @@ import transactionRoutesReport from "./routes/transactionRoutesReport.js";
 import transactionRead from "./routes/transactionRoutesRead.js";
 import transactionRoutesUpdate from "./routes/transactionRoutesUpdate.js";
 import transactionRoutesDelete from "./routes/transactionRoutesDelete.js";
-import sync from './utils/sync.js';
+let sync = null;
 import mongoose from "mongoose"; // Or MongoDB's native driver
 
 dotenv.config();
@@ -43,14 +43,18 @@ app.use(
   })
 );
 // Initialize ResilientDB to MongoDB synchronization
-(async () => {
+if (process.env.SYNC_ENABLED === 'true') {
+  (async () => {
     try {
-        await sync.initialize();
-        console.log('Synchronization initialized.');
+      const mod = await import('./utils/sync.js');
+      sync = mod.default;
+      await sync.connect();
+      // 你原来监听的 on('open') / on('data') / on('error') ... 保持不变
     } catch (error) {
-        console.error('Error during sync initialization:', error);
+      console.error('Error during sync initialization:', error);
     }
-})();
+  })();
+}
 
 
 // Direct Test Routes without any prefix
