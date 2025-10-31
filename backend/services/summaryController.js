@@ -1,7 +1,5 @@
 // summaryController.js
 
-import fetch from "node-fetch";
-
 const API_URL = "http://localhost:8099/api/read/userTransactions";
 
 async function fetchTransactions(token) {

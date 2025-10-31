@@ -18,7 +18,7 @@ const app = express();
 const port = 8099;
 
 const mongoURI = process.env.MONGODB_URI; // Replace with your MongoDB URI
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(mongoURI);
 
 const db_connect = mongoose.connection;
 db_connect.on("error", console.error.bind(console, "MongoDB connection error:"));
