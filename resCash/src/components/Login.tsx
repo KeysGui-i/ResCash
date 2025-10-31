@@ -86,7 +86,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const handleDevLogin = async () => {
     if (!devKey || !devKey.trim()) {
       setModalTitle("Invalid publicKey");
-      setModalMessage("请输入一个非空的 publicKey。");
+      setModalMessage("Please enter a non-empty publicKey.");
       setShowModal(true);
       return;
     }
@@ -106,10 +106,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           <div ref={animationContainer} className="animation-container" />
 
-          {/* 说明 */}
+          {/* Info */}
           <div style={{ textAlign: "center", marginBottom: 12 }}>
             <small style={{ color: "#666" }}>
-              开发者模式：可输入任意 publicKey（仅本地调试用）
+              Developer mode: Enter any publicKey (for local debugging only)
             </small>
           </div>
 

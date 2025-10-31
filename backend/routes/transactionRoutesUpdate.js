@@ -18,12 +18,12 @@ router.put("/updateTransaction/:id", authenticate, async (req, res) => {
       return res.status(401).json({ success: false, message: "Unauthorized: missing publicKey in token." });
     }
 
-    const { id } = req.params; // 这里的 id = transactionID（自定义 UUID），不是 Mongo _id
+    const { id } = req.params; // id = transactionID (custom UUID), not Mongo _id
     if (!id) {
       return res.status(400).json({ success: false, message: "Transaction ID is required." });
     }
 
-    // 仅允许这些字段被更新（白名单）
+    // Only allow these fields to be updated (whitelist)
     const {
       amount,
       category,
@@ -35,7 +35,7 @@ router.put("/updateTransaction/:id", authenticate, async (req, res) => {
       timestamp,
     } = req.body;
 
-    // 基本校验
+    // Basic validation
     const update = {};
     if (amount !== undefined) {
       const amountNum = Number(amount);
@@ -52,7 +52,7 @@ router.put("/updateTransaction/:id", authenticate, async (req, res) => {
     if (paymentMethod !== undefined) update.paymentMethod = paymentMethod;
     if (timestamp !== undefined) update.timestamp = timestamp ? new Date(timestamp) : null;
 
-    // 按 transactionID + publicKey + 未软删 定位并更新
+    // Find and update by transactionID + publicKey + not soft deleted
     const updatedTransaction = await Transaction.findOneAndUpdate(
       { transactionID: id, publicKey, isDeleted: { $ne: true } },
       { $set: update },

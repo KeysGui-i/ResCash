@@ -4,14 +4,16 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const authenticate = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Expecting "Bearer <token>"
+  const authHeader = req.headers.authorization;
   
-  if (!token) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ 
       success: false, 
       message: "Unauthorized access, token required" 
     });
   }
+  
+  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

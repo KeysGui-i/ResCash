@@ -17,8 +17,10 @@ dotenv.config();
 const app = express();
 const port = 8099;
 
-const mongoURI = process.env.MONGODB_URI; // Replace with your MongoDB URI
-mongoose.connect(mongoURI);
+const mongoURI = process.env.MONGODB_URI;
+mongoose.connect(mongoURI)
+  .then(() => console.log("MongoDB connection successful"))
+  .catch(err => console.error("MongoDB connection error:", err));
 
 const db_connect = mongoose.connection;
 db_connect.on("error", console.error.bind(console, "MongoDB connection error:"));
