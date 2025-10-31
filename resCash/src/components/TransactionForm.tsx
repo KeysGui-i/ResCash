@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 import "../App.css";
 import NotificationModal from "./NotificationModal";
@@ -151,10 +151,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   }
 };
 
-
-  const handleLogout = () => {
-    onLogout();
-  };
 
   const handleCloseModal = () => {
     setShowModal(false);

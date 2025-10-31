@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import TransactionForm from "./TransactionForm";
@@ -30,10 +30,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<Transaction>(transaction);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [modalTitle, setModalTitle] = useState<string>("");
-  const [modalMessage, setModalMessage] = useState<string>("");
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     if (
@@ -42,19 +38,14 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     ) {
       setFormData(transaction);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transaction]);
 
   const handleFormChange = (updatedFields: Partial<Transaction>) => {
-    if (JSON.stringify(updatedFields) !== JSON.stringify(formData)) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        ...updatedFields,
-      }));
-    }
-  };
-
-  const handleReload = () => {
-    window.location.reload();
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      ...updatedFields,
+    }));
   };
 
   const handleSave = async () => {
@@ -112,7 +103,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       const result = await response.json();
       if (result.success) {
         console.log("Transaction deleted successfully!");
-        setShowModal(true);
 
         onClose(); // Close the modal after saving
 
@@ -124,9 +114,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       }
     } catch (err) {
       console.error("Error deleting transaction:", err);
-      setModalTitle("Error");
-      setModalMessage("Failed to delete transaction");
-      setShowModal(true);
     }
   };
 
