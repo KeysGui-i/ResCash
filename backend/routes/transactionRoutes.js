@@ -1,6 +1,5 @@
 import express from "express";
 import Transaction from "../models/Transaction.js";
-import { getPublicKey } from "../services/getPublicKey.js";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
@@ -102,28 +101,6 @@ router.get("/", async (req, res) => {
     res.status(200).json(transactions);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// Route to get a transaction's public key by ID
-router.get("/publicKey/:transactionID", async (req, res) => {
-  console.log(
-    "Requesting public key for transactionID:",
-    req.params.transactionID
-  );
-  const transactionID = req.params.transactionID;
-
-  try {
-    const publicKey = await getPublicKey(transactionID);
-    if (!publicKey) {
-      console.error("Public key not found for transactionID:", transactionID);
-      return res.status(404).json({ message: "Public key not found." });
-    }
-    console.log("Fetched public key:", publicKey);
-    res.status(200).json({ publicKey });
-  } catch (error) {
-    console.error("Error fetching public key:", error);
-    res.status(500).json({ message: "Internal server error." });
   }
 });
 

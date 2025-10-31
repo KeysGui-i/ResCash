@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import TransactionForm from "./TransactionForm";
-import ResVaultSDK from "resvault-sdk";
 
 interface Transaction {
   _id: string; // MongoDB ID
@@ -29,11 +28,8 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
   onClose,
   onSave,
 }) => {
-  const recipientAddress: string =
-    "2ETHT1JVJaFswCcKP9sm5uQ8HR4AGqQvz8gVQHktQoWA";
   const [formData, setFormData] = useState<Transaction>(transaction);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const sdkRef = useRef<ResVaultSDK | null>(null);
   const [modalTitle, setModalTitle] = useState<string>("");
   const [modalMessage, setModalMessage] = useState<string>("");
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -116,24 +112,6 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       const result = await response.json();
       if (result.success) {
         console.log("Transaction deleted successfully!");
-
-        if (sdkRef && sdkRef.current) {
-          const deletedTransaction = result.deletedTransaction;
-          const newTransactionData = {
-            deletedTransaction,
-            is_deleted: true,
-            deleted_transactionID: transaction.transactionID,
-          };
-          sdkRef.current.sendMessage({
-            type: "commit",
-            direction: "commit",
-            amount: deletedTransaction.amount,
-            data: newTransactionData,
-            recipient: recipientAddress,
-          });
-        }
-
-        console.log("Transaction deleted successfully.");
         setShowModal(true);
 
         onClose(); // Close the modal after saving

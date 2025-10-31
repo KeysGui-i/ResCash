@@ -39,6 +39,14 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+    required: false,
+  },
 });
 
 // Create a model from the schema

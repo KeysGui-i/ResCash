@@ -54,8 +54,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   onSdkOpen,
   onSdkComplete,
 }) => {
-  const recipientAddress: string =
-    "2ETHT1JVJaFswCcKP9sm5uQ8HR4AGqQvz8gVQHktQoWA";
   const [amount, setAmount] = useState<string>(
     initialData?.amount.toString() || ""
   );
@@ -111,125 +109,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     onFormChange,
   ]);
 
-  useEffect(() => {
-    const sdk = sdkRef.current;
-    if (!sdk) return;
 
-    const messageHandler = async (event: MessageEvent) => {
-      const message = event.data;
-
-      if (
-        message &&
-        message.type === "FROM_CONTENT_SCRIPT" &&
-        message.data &&
-        message.data.success !== undefined
-      ) {
-        if (message?.data?.event === "sdkWindowOpened") {
-          onSdkOpen?.(); // Hide modal when SDK window opens
-        }
-        if (message.data.success) {
-          const transactionID = message.data.data.postTransaction.id;
-          console.log(message.data);
-
-          const requestBody = {
-            transactionID,
-            amount,
-            category,
-            transactionType,
-            notes,
-            merchant,
-            paymentMethod,
-            timestamp,
-          };
-
-          console.log("Request Body:", JSON.stringify(requestBody));
-
-          try {
-            const response = await fetch(
-              "http://localhost:8099/api/transactions/saveTransaction",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(requestBody),
-              }
-            );
-
-            const result = await response.json();
-            if (result.success) {
-              console.log("Transaction saved successfully:", result);
-              setModalTitle("Success");
-              setModalMessage(
-                "Transaction to resdb and backend successful! ID: " +
-                  transactionID
-              );
-            } else {
-              console.error(
-                "Failed to save transaction to backend:",
-                result.message
-              );
-              setModalTitle("Transaction Failed");
-              setModalMessage(
-                "Transaction to backend failed: " + result.message
-              );
-            }
-          } catch (error) {
-            console.error(
-              "An error occurred while saving transaction to backend:",
-              error
-            );
-            setModalTitle("Transaction Failed");
-            setModalMessage("Transaction to backend failed: " + message);
-          }
-        } else {
-          setModalTitle("Transaction Failed");
-          setModalMessage(
-            "Transaction to resdb failed: " +
-              (message.data.error || JSON.stringify(message.data.errors))
-          );
-        }
-        setShowModal(true);
-        onSdkComplete?.();
-      }
-    };
-
-    sdk.addMessageListener(messageHandler);
-
-    return () => {
-      sdk.removeMessageListener(messageHandler);
-    };
-  }, [
-    amount,
-    category,
-    transactionType,
-    notes,
-    merchant,
-    paymentMethod,
-    timestamp,
-  ]);
-
-  useEffect(() => {
-    const messageHandler = (event: MessageEvent) => {
-      const message = event.data;
-
-      // Ensure the message is from the expected source
-      if (message?.type === "FROM_CONTENT_SCRIPT") {
-        // Check if the message indicates the SDK window has opened
-        if (message?.data?.event === "sdkWindowOpened") {
-          // onSdkOpen?.(); // Hide modal when SDK window opens
-        }
-
-        // Check if the message indicates the SDK operation is complete
-        if (message?.data?.success) {
-          // onSdkComplete?.(); // Show modal again after successful transaction
-        }
-      }
-    };
-
-    window.addEventListener("message", messageHandler);
-    return () => window.removeEventListener("message", messageHandler);
-  }, [onSdkOpen, onSdkComplete]);
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();

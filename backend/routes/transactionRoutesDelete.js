@@ -1,6 +1,7 @@
-// routes/transactionRoutes.js
+// routes/transactionRoutesDelete.js
 import express from "express";
 import Transaction from "../models/Transaction.js";
+import authenticate from "../middleware/authenticate.js";
 import dotenv from "dotenv";
 
 dotenv.config();

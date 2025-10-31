@@ -1,7 +1,8 @@
-// routes/transactionRoutes.js
+// routes/transactionRoutesUpdate.js
 import express from "express";
 import mongoose from "mongoose";
 import Transaction from "../models/Transaction.js";
+import authenticate from "../middleware/authenticate.js";
 import dotenv from "dotenv";
 
 dotenv.config();
