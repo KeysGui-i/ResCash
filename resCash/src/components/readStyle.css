@@ -1,0 +1,85 @@
+/* Overall layout container */
+.layout-container {
+  display: flex;
+  height: 100vh; /* Make the page occupy the full height */
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 240px; /* Fixed sidebar width */
+  background-color: #2e2e3e; /* Sidebar background color */
+  flex-shrink: 0;
+  height: 100%;
+  position: fixed; /* Keep the sidebar fixed on the left */
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+  color: #fff;
+}
+
+/* Main content area */
+.main-content {
+  margin-left: 240px; /* Leave space equal to the sidebar width */
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #E1F5FE; /* Background color from new palette */
+  color: #000; /* Change text color to black for readability */
+}
+
+.read-container {
+  padding: 20px;
+  background-color: #D4F6FF; /* Secondary color for containers */
+  color: #000; /* Set text color to black */
+  border-radius: 8px; /* Add rounded corners for a modern look */
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #000; /* Set title color to black */
+}
+
+.table-container {
+  overflow-x: auto; /* Make the table scrollable on small screens */
+  background-color: #C6E7FF; /* Primary color for table background */
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #000; /* Table text color changed to black */
+}
+
+.data-table th, .data-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #88C8FF; /* Subtle border color for contrast */
+}
+
+.data-table th {
+  background-color: #C6E7FF; /* Primary color for table header background */
+  color: #000; /* Header text color */
+}
+
+.data-table tr:hover {
+  background-color: #B6DFFF; /* Row background color when hovering */
+}
+
+.edit-button {
+  padding: 8px 12px;
+  background-color: #FF6F61; /* Updated button color for contrast */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.edit-button:hover {
+  background-color: #E55D52; /* Button color change when hovering */
+}
+
